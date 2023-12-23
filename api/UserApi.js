@@ -1,12 +1,14 @@
 const connection = require('../connection');
 const user = require("../model/User");
 const userDef = connection.define("USER", user);
-
+const session = require("express-session");
 
 const UserApi = {
 		
 	getAllusers: async function(request, response) {
-		const users = await userDef.findAll();	
+		const users = await userDef.findAll();
+		const authUser = request.session.user;
+		console.log(authUser);	
 		response.send(users);
 	},
 	createUser: async function(request, response) {
@@ -30,6 +32,26 @@ const UserApi = {
 		});
 		var verifiedEdit = await userDef.findByPk(updatedUser.username);
 		response.json(verifiedEdit);	
+	},
+	login: async function(request, response) {
+		var username = request.body.username;
+		var password = request.body.password;
+		var authenticatedUser = await userDef.findAll({
+			attributes: ["username", "name"],		
+			
+			where: {
+				username: username,
+				password: password
+			}
+			
+		});		
+		if (authenticatedUser.length > 0) {	        
+	        request.session.user = authenticatedUser;
+	        console.log(request.session.user)			
+			response.json(authenticatedUser);
+		} else {
+			response.json(null);
+		}
 	}
 	
 }
